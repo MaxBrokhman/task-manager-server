@@ -19,13 +19,23 @@ router.post('/tasks', checkAuth, async ({ body, user }, res) => {
     res.status(400).send(error)
   }
 })
-
+// /tasks?completed=true
+// /tasks?limit=10&skip=10
+// /tasks?sortBy=createdAt:asc
 router.get('/tasks', checkAuth, async ({ user, query }, res) => {
   const match = {}
+  const sort = {}
+
   if(query.completed) {
     options.completed = query.completed === 'true' 
       ? true
       : false 
+  }
+  if(query.sortBy) {
+    const sortParams = query.sortBy.split(':')
+    sort[sortParams[0]] = sortParams[1] === 'asc'
+      ? 1
+      : -1
   }
   try {
     await user.populate({
@@ -34,6 +44,7 @@ router.get('/tasks', checkAuth, async ({ user, query }, res) => {
       options: {
         limit: parseInt(query.limit),
         skip: parseInt(query.skip),
+        sort,
       },
     }).execPopulate()
     res.send(user.tasks)
