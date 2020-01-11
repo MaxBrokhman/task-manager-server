@@ -1,13 +1,14 @@
 const express = require('express')
 
 const User = require('../models/user')
+const checkAuth = require('../middleware/checkAuth')
 
 const router = new express.Router()
 
 module.exports = router
 
-router.post('/users', async (req, res) => {
-  const user = new User(req.body)
+router.post('/users', async ({ body }, res) => {
+  const user = new User(body)
   try {
     await user.save()
     res.status(201).send(user)
@@ -16,31 +17,15 @@ router.post('/users', async (req, res) => {
   }
 })
 
-router.get('/users', async (req, res) => {
-  try {
-    const users = await User.find({})
-    res.send(users)
-  } catch {
-    res.status(500).send()
-  }
-})
+router.get('/users/me', checkAuth, async ({ user }, res) => res.send(user))
 
-router.get('/users/:id', async ({ params }, res) => {
+router.patch('/users/me', checkAuth, async ({ user, body }, res) => {
+  const updates = Object.keys(body)
+  const allowedUpdates = ['name', 'email', 'password', 'age']
+  const isAllowed = updates.every(update => allowedUpdates.includes(update))
+  if(!isAllowed) return res.status(400).send({ 'error': 'Invalid updates!' })
   try {
-    const user = await User.findById(params.id)
-    user 
-      ? res.send(user) 
-      : res.status(404).send()
-  } catch {
-    res.status(500).send()
-  }
-})
-
-router.patch('/users/:id', async ({ params, body }, res) => {
-  try {
-    const user = await User.findById(params.id)
-    if(!user) return res.status(404).send()
-    Object.keys(req.body).forEach(key => user[key] = req.body[key])
+    updates.forEach(key => user[key] = body[key])
     await user.save()
     res.send(user)
   } catch(error) {
@@ -48,12 +33,10 @@ router.patch('/users/:id', async ({ params, body }, res) => {
   }
 })
 
-router.delete('/users/:id', async ({ params }, res) => {
+router.delete('/users/me', checkAuth, async ({ user }, res) => {
   try {
-    const user = await User.findByIdAndDelete(params.id)
-    user 
-      ? res.send(user) 
-      : res.status(404).send()
+    await user.remove()
+    res.send(user) 
   } catch {
     res.status(500).send()
   }
@@ -76,5 +59,25 @@ router.post('/users/signup', async ({ body }, res) => {
     res.status(201).send({ user, token })
   } catch (error) {
     res.status(400).send(error)
+  }
+})
+
+router.post('/users/logout', checkAuth, async ({ user, token }, res) => {
+  try {
+    user.tokens = user.tokens.filter(item => item.token !== token)
+    await user.save()
+    res.send()
+  } catch {
+    res.status(500).send()
+  }
+})
+
+router.post('/users/logoutAll', checkAuth, async ({ user }, res) => {
+  try {
+    user.tokens = []
+    await user.save()
+    res.send()
+  } catch {
+    res.status(500).send()
   }
 })
