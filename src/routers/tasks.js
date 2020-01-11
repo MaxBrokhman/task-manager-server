@@ -20,15 +20,23 @@ router.post('/tasks', checkAuth, async ({ body, user }, res) => {
   }
 })
 
-router.get('/tasks', checkAuth, async ({ user }, res) => {
+router.get('/tasks', checkAuth, async ({ user, query }, res) => {
+  const match = {}
+  if(query.completed) {
+    options.completed = query.completed === 'true' 
+      ? true
+      : false 
+  }
   try {
-    const tasks = await Task.find({ userId: user._id })
-    // another posssible approach
-   // await user.populate('tasks').execPopulate()
-   // res.send(user.tasks)
-    tasks 
-      ? res.send(tasks) 
-      : res.status(404).send()
+    await user.populate({
+      path: 'tasks',
+      match,
+      options: {
+        limit: parseInt(query.limit),
+        skip: parseInt(query.skip),
+      },
+    }).execPopulate()
+    res.send(user.tasks)
   } catch {
     res.status(500).send()
   }
