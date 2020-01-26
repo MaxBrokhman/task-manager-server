@@ -1,32 +1,14 @@
 const request = require('supertest')
-const jwt = require('jsonwebtoken')
-const mongoose = require('mongoose')
 
 const app = require('../src/app')
 const User = require('../src/models/user')
+const {
+  user1, 
+  user2,
+  setupDb,
+} = require('./fixtures')
 
-const user2Id = new mongoose.Types.ObjectId()
-
-const user1 = {
-  name: 'Andy',
-  email: 'andymad@example.com',
-  password: 'ghg86r8yf88',
-}
-
-const user2 = {
-  _id: user2Id,
-  name: 'Mike',
-  email: 'mike1@example.com',
-  password: 'sjdbjvibsd9v',
-  tokens: [{
-    token: jwt.sign({ _id: user2Id }, process.env.JWT_SECRET),
-  }],
-}
-
-beforeEach(async () => {
-  await User.deleteMany()
-  await new User(user2).save()
-})
+beforeEach(setupDb)
 
 test('Should sign up a new user', async () => {
   const response = await request(app)
@@ -34,20 +16,20 @@ test('Should sign up a new user', async () => {
     .send(user1)
     .expect(201)
 
-    // assertion that database was changed correctly
-    const user = await User.findById(response.body.user._id)
-    expect(user).not.toBeNull()
+  // assertion that database was changed correctly
+  const user = await User.findById(response.body.user._id)
+  expect(user).not.toBeNull()
 
     
-    // assertions about response
-    expect(response.body).toMatchObject({
-      user: {
-        name: user1.name,
-        email: user1.email,
-      },
-      token: user.tokens[0].token,
-    })
-    expect(user.password).not.toBe(user1.password)
+  // assertions about response
+  expect(response.body).toMatchObject({
+    user: {
+      name: user1.name,
+      email: user1.email,
+    },
+    token: user.tokens[0].token,
+  })
+  expect(user.password).not.toBe(user1.password)
 })
 
 test('Should log in existing user', async () => {
@@ -59,9 +41,9 @@ test('Should log in existing user', async () => {
     })
     .expect(200)
 
-    //assertion about token
-    const user = await User.findById(response.body.user._id)
-    expect(response.body.token).toBe(user.tokens[1].token)
+  //assertion about token
+  const user = await User.findById(response.body.user._id)
+  expect(response.body.token).toBe(user.tokens[1].token)
 })
 
 test('Should not log in unexistent user', async () => {
@@ -122,9 +104,9 @@ test('Should delete account for authanticated user', async () => {
     .send()
     .expect(200)
 
-    //assertion that user not in database anymore
-    const user = await User.findById(response.body._id)
-    expect(user).toBeNull()
+  //assertion that user not in database anymore
+  const user = await User.findById(response.body._id)
+  expect(user).toBeNull()
 })
 
 test('Should not delete account for authanticated user', async () => {
@@ -133,5 +115,3 @@ test('Should not delete account for authanticated user', async () => {
     .send()
     .expect(401)
 })
-
-
