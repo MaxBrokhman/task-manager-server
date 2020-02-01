@@ -5,6 +5,7 @@ const User = require('../src/models/user')
 const {
   user1, 
   user2,
+  user4,
   setupDb,
 } = require('./fixtures')
 
@@ -30,6 +31,13 @@ test('Should sign up a new user', async () => {
     token: user.tokens[0].token,
   })
   expect(user.password).not.toBe(user1.password)
+})
+
+test('Should not sign up a user with invalid email', async () => {
+  const response = await request(app)
+    .post('/users/signup')
+    .send(user4)
+    .expect(400)
 })
 
 test('Should log in existing user', async () => {

@@ -55,6 +55,12 @@ const user3 = {
   }],
 }
 
+const user4 = {
+  name: 'Jamie',
+  email: 'sdvsdv@',
+  password: 'ghg86sdvbksdbvs9r8yf88',
+}
+
 const setupDb = async () => {
   await User.deleteMany()
   await Task.deleteMany()
@@ -69,6 +75,7 @@ module.exports = {
   user1,
   user2,
   user3,
+  user4,
   setupDb,
   task1Id,
   task1,
