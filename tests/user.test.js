@@ -34,7 +34,7 @@ test('Should sign up a new user', async () => {
 })
 
 test('Should not sign up a user with invalid email', async () => {
-  const response = await request(app)
+  await request(app)
     .post('/users/signup')
     .send(user4)
     .expect(400)
@@ -105,19 +105,30 @@ test('Should not updated invalid user fields', async () => {
     .expect(400)
 })
 
-test('Should delete account for authanticated user', async () => {
-  const response = await request(app)
-    .delete('/users/me')
+test('Should not updated invalid email', async () => {
+  const updated = {
+    email: 'ultra@'
+  }
+  await request(app)
+    .patch('/users/me')
     .set('Authorization', `Bearer ${user2.tokens[0].token}`)
-    .send()
-    .expect(200)
-
-  //assertion that user not in database anymore
-  const user = await User.findById(response.body._id)
-  expect(user).toBeNull()
+    .send(updated)
+    .expect(400)
 })
 
-test('Should not delete account for authanticated user', async () => {
+// test('Should delete account for authanticated user', async () => {
+//   const response = await request(app)
+//     .delete('/users/me')
+//     .set('Authorization', `Bearer ${user2.tokens[0].token}`)
+//     .send()
+//     .expect(200)
+
+//   //assertion that user not in database anymore
+//   const user = await User.findById(response.body._id)
+//   expect(user).toBeNull()
+// })
+
+test('Should not delete account for unauthanticated user', async () => {
   await request(app)
     .delete('/users/me')
     .send()

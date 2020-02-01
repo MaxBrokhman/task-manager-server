@@ -79,4 +79,5 @@ module.exports = {
   setupDb,
   task1Id,
   task1,
+  task2,
 }

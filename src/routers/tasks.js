@@ -27,7 +27,8 @@ router.get('/tasks', checkAuth, async ({ user, query }, res) => {
   const sort = {}
 
   if(query.completed) {
-    options.completed = query.completed === 'true' 
+    const isQueryCompleted = query.completed === 'true'
+    match.completed = isQueryCompleted
       ? true
       : false 
   }
